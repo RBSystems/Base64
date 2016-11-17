@@ -1,0 +1,94 @@
+/*
+Dealer Name: RBSystems
+Programmer:  Alex M. aka Ale4ko
+Email:       alex@rbsystems.co.il
+Tel:         0545807065
+*/
+#SYMBOL_NAME "base64"
+#DEFINE_CONSTANT CHARS  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+
+#DEFAULT_VOLATILE
+#ENCODING_ASCII
+
+STRING_INPUT FromBase64[255];
+STRING_INPUT   ToBase64[255];
+
+STRING_OUTPUT decode;
+STRING_OUTPUT encode;
+
+STRING_Function getChar(SIGNED_INTEGER int)
+{
+    if (int >= 0)
+    {
+        return(mid(CHARS, int + 1, 1));
+    }
+    else
+    {
+        return("");
+    }
+}
+STRING_FUNCTION base64_decode(STRING input)
+{
+    SIGNED_INTEGER enc1,enc2,enc3,enc4;
+    SIGNED_INTEGER chr1,chr2,chr3;
+    STRING         result[255];
+    INTEGER        n;
+
+    for (n = 1 to len(input) step 4)
+    {
+
+        enc1 = FIND(mid(input, n  ,1),CHARS)-1;
+        enc2 = FIND(mid(input, n+1,1),CHARS)-1;
+        enc3 = FIND(mid(input, n+2,1),CHARS)-1;
+        enc4 = FIND(mid(input, n+3,1),CHARS)-1;
+
+        chr1 = (enc1 << 2) | (enc2 >> 4);
+        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        chr3 = ((enc3 & 3) << 6) | enc4;
+
+        result = result + chr(chr1);
+        if (enc3 != 64) {
+            result = result + chr(chr2);
+        }
+        if (enc4 != 64) {
+            result = result + chr(chr3);
+        }
+    }
+    return(result);
+}
+STRING_FUNCTION base64_encode(STRING input)
+{
+    SIGNED_INTEGER enc1,enc2,enc3,enc4;
+    SIGNED_INTEGER chr1,chr2,chr3;
+    STRING         result[255];
+    INTEGER        n;
+
+    for (n = 1 to len(input) step 3)
+    {
+        chr1 = byte(input, n);
+        chr2 = byte(input, n+1);
+        chr3 = byte(input, n+2);
+        if(chr2=-1){chr2=0;}
+        if(chr3=-1){chr3=0;}
+
+        enc1 =   chr1 >> 2;
+        enc2 = ((chr1 &  3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 =   chr3 & 63;
+        if(chr2=0){ enc3 = 64; enc4 = 64;}
+        else if(chr3=0){ enc4 = 64; }
+
+        result = result + getChar(enc1) + getChar(enc2) + getChar(enc3) + getChar(enc4);
+    }
+    return(result);
+}
+
+CHANGE FromBase64
+{
+    decode = base64_decode(FromBase64);
+}
+
+CHANGE ToBase64
+{
+    encode = base64_encode(ToBase64);
+}
