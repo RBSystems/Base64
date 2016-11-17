@@ -3,12 +3,18 @@ Dealer Name: RBSystems
 Programmer:  Alex M. aka Ale4ko
 Email:       alex@rbsystems.co.il
 Tel:         0545807065
+Version:     1.1
 */
 #SYMBOL_NAME "base64"
+#CATEGORY "10" // Serial
+#HINT "base64"
+
 #DEFINE_CONSTANT CHARS  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 
 #DEFAULT_VOLATILE
 #ENCODING_ASCII
+
+//#ENABLE_TRACE
 
 STRING_INPUT FromBase64[255];
 STRING_INPUT   ToBase64[255];
@@ -16,7 +22,9 @@ STRING_INPUT   ToBase64[255];
 STRING_OUTPUT decode;
 STRING_OUTPUT encode;
 
-STRING_Function getChar(SIGNED_INTEGER int)
+INTEGER CODES[255];
+
+STRING_FUNCTION getChar(SIGNED_INTEGER int)
 {
     if (int >= 0)
     {
@@ -33,14 +41,16 @@ STRING_FUNCTION base64_decode(STRING input)
     SIGNED_INTEGER chr1,chr2,chr3;
     STRING         result[255];
     INTEGER        n;
-
+    result = "";
     for (n = 1 to len(input) step 4)
     {
 
-        enc1 = FIND(mid(input, n  ,1),CHARS)-1;
-        enc2 = FIND(mid(input, n+1,1),CHARS)-1;
-        enc3 = FIND(mid(input, n+2,1),CHARS)-1;
-        enc4 = FIND(mid(input, n+3,1),CHARS)-1;
+        enc1 = CODES[ Byte( input, n   ) ];
+        enc2 = CODES[ Byte( input, n+1 ) ];
+        enc3 = CODES[ Byte( input, n+2 ) ];
+        enc4 = CODES[ Byte( input, n+3 ) ];
+
+        //Trace("enc1=%d enc2=%d enc3=%d enc4=%d\n", enc1, enc2, enc3, enc4);
 
         chr1 = (enc1 << 2) | (enc2 >> 4);
         chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
@@ -62,7 +72,7 @@ STRING_FUNCTION base64_encode(STRING input)
     SIGNED_INTEGER chr1,chr2,chr3;
     STRING         result[255];
     INTEGER        n;
-
+    result = "";
     for (n = 1 to len(input) step 3)
     {
         chr1 = byte(input, n);
@@ -91,4 +101,10 @@ CHANGE FromBase64
 CHANGE ToBase64
 {
     encode = base64_encode(ToBase64);
+}
+
+Function Main() {
+    INTEGER i;
+    SetArray( CODES, 255 );
+    for( i=1 to Len(CHARS) ) CODES[ Byte(CHARS,i) ] = i-1;
 }
